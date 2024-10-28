@@ -25,7 +25,7 @@ class AdminOrStudentCard extends StatelessWidget {
             ? "Enter the credentials provided by your team"
             : "Enter the credentials provided by your organization";
 
-        // Navigate to LoginScreen with named route and arguments
+        // Navigate to LoginScreen with only the message argument
         Navigator.pushNamed(
           context,
           '/loginscreen',

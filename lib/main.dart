@@ -1,12 +1,12 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:student_management_system/LandingScreen/landing_screen.dart';
 import 'package:student_management_system/LoginScreen/login_screen.dart';
 
+import 'admin_home_screen.dart/admin_home_screen.dart';
 import 'consts/constant_color.dart';
 import 'firebase_options.dart';
-import 'helpers/error_provider.dart';
+import 'student_home_screen.dart/student_home_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,13 +15,7 @@ Future<void> main() async {
   );
 
   runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider<ErrorProvider>(create: (_) => ErrorProvider()),
-        // Add other providers here if necessary
-      ],
-      child: const MyApp(),
-    ),
+    const MyApp(),
   );
 }
 
@@ -37,6 +31,10 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       initialRoute: '/',
+      routes: {
+        '/adminHomeScreen': (context) => const AdminHomeScreen(),
+        '/studentHomeScreen': (context) => const StudentHomeScreen(),
+      },
       onGenerateRoute: (settings) {
         if (settings.name == '/loginscreen') {
           final args = settings.arguments as Map<String, dynamic>;
@@ -44,8 +42,6 @@ class MyApp extends StatelessWidget {
             builder: (context) => LoginScreen(message: args['message']),
           );
         }
-
-        // Default route (LandingScreen)
         return MaterialPageRoute(builder: (context) => const LandingScreen());
       },
     );
