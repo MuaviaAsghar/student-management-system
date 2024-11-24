@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 
 import '../consts/constant_color.dart';
@@ -7,8 +8,13 @@ import 'login_logic.dart';
 
 class LoginScreen extends StatefulWidget {
   final String message;
+  final bool showRegister;
 
-  const LoginScreen({super.key, required this.message});
+  const LoginScreen({
+    super.key,
+    required this.message,
+    this.showRegister = false,
+  });
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -19,24 +25,53 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final LoginLogic _loginLogic = LoginLogic();
   final _formKey = GlobalKey<FormState>();
+  bool rememberMe = false;
 
   @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
+
+  void _loadSavedCredentials() {
+    final box = Hive.box('loginBox');
+    final savedEmail = box.get('email');
+    final savedPassword = box.get('password');
+    if (savedEmail != null && savedPassword != null) {
+      _emailController.text = savedEmail;
+      _passwordController.text = savedPassword;
+      rememberMe = true;
+    }
   }
 
   void _handleLogin() {
     if (_formKey.currentState!.validate()) {
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
+
+      if (rememberMe) {
+        final box = Hive.box('loginBox');
+        box.put('email', email);
+        box.put('password', password);
+      } else {
+        final box = Hive.box('loginBox');
+        box.delete('email');
+        box.delete('password');
+      }
+
       _loginLogic.login(
         email: email,
         password: password,
         context: context,
       );
     }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -137,6 +172,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                   const SizedBox(height: 20),
+                  CheckboxListTile(
+                    title: const Text("Remember Me"),
+                    value: rememberMe,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        rememberMe = value ?? false;
+                      });
+                    },
+                  ),
                   InkWell(
                     onTap: _handleLogin,
                     child: Container(
@@ -158,6 +202,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
+                  if (widget.showRegister)
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pushNamed(
+                            context, '/studentRegistrationScreen');
+                      },
+                      child: const Text(
+                        "Register",
+                        style: TextStyle(color: Colors.black),
+                      ),
+                    ),
                 ],
               ),
             ),

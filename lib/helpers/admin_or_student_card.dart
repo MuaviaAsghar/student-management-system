@@ -20,16 +20,17 @@ class AdminOrStudentCard extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-        // Determine message based on card type
+        // Determine message and showRegister based on card type
         final message = centerText == "Admin"
             ? "Enter the credentials provided by your team"
             : "Enter the credentials provided by your organization";
+        final showRegister = centerText == "Student";
 
-        // Navigate to LoginScreen with only the message argument
+        // Navigate to LoginScreen with message and showRegister arguments
         Navigator.pushNamed(
           context,
           '/loginscreen',
-          arguments: {'message': message},
+          arguments: {'message': message, 'showRegister': showRegister},
         );
       },
       child: Card(

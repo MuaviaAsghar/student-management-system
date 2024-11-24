@@ -20,28 +20,46 @@ class LoginLogic {
         password: password.trim(),
       );
 
-      // Check if user exists in Firestore
-      final userDoc =
-          await _firestore.collection('users').doc(email.trim()).get();
-
-      // If the user document doesn't exist, create it with role 'admin'
-      String role;
-      if (!userDoc.exists) {
-        await _firestore.collection('users').doc(email.trim()).set({
-          'email': email.trim(),
-          'role': 'admin', // Default role
-        });
-        role = 'admin';
-      } else {
-        role = userDoc.data()?['role'] ??
-            'student'; // Default to student if role is not set
+      // Retrieve user ID from authentication
+      final userId = _auth.currentUser?.uid;
+      if (userId == null) {
+        throw FirebaseAuthException(code: 'user-not-found');
       }
 
-      // Navigate to appropriate screen based on role
-      if (role == 'admin') {
-        Navigator.pushReplacementNamed(context, '/adminHomeScreen');
+      // Check if user exists in 'admins' or 'students' collection
+      DocumentSnapshot<Map<String, dynamic>> userDoc;
+      bool isAdmin = false;
+
+      // Try to find the user in 'admins' subcollection
+      userDoc = await _firestore
+          .collection('users')
+          .doc('admins')
+          .collection(email.trim())
+          .doc("admin")
+          .get();
+
+      // If not found in 'admins', check in 'students'
+      if (!userDoc.exists) {
+        userDoc = await _firestore
+            .collection('users')
+            .doc('students')
+            .collection(email.trim())
+            .doc(userId)
+            .get();
       } else {
-        Navigator.pushReplacementNamed(context, '/studentHomeScreen');
+        isAdmin = true;
+      }
+
+      // If user is found, navigate based on role
+      if (userDoc.exists) {
+        if (isAdmin) {
+          Navigator.pushReplacementNamed(context, '/adminHomeScreen');
+        } else {
+          Navigator.pushReplacementNamed(context, '/studentHomeScreen');
+        }
+      } else {
+        // Handle the case where the user doesn't exist in either collection
+        _showErrorSnackbar(context, "User not found in the database.");
       }
     } catch (e) {
       log("Error during login: $e");
@@ -58,7 +76,12 @@ class LoginLogic {
         errorMessage = "Incorrect password";
       }
     }
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(errorMessage)));
+    _showErrorSnackbar(context, errorMessage);
+  }
+
+  void _showErrorSnackbar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 }
